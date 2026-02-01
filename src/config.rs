@@ -12,8 +12,18 @@ pub struct ConfigColor {
     blue: u8,
     alpha: u8,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GridConfig {
+    pub enabled: bool,
+    pub col: u8,
+    pub row: u8,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ThemeConfig {
+    pub fullscreen: bool,
+    pub grid_config: GridConfig,
     pub window_background: ConfigColor,
     pub selected_item_background: ConfigColor,
     pub selected_text_color: ConfigColor,
@@ -50,6 +60,12 @@ pub struct Config {
 fn default_config() -> Config {
     Config {
         theme: ThemeConfig {
+            fullscreen: false,
+            grid_config: GridConfig {
+                enabled: false,
+                col: 8,
+                row: 4,
+            },
             window_background: ConfigColor {
                 red: 24,
                 green: 24,
@@ -103,7 +119,7 @@ pub fn config_color_to_slint(c: &ConfigColor) -> Color {
 
 fn get_config_file() -> PathBuf {
     let mut path = config_dir().unwrap();
-    path.push("cosmic-wanderer");
+    path.push("cosmic-wanderer-tests");
     fs::create_dir_all(&path).unwrap();
     path.push("config.toml");
     path

@@ -5,7 +5,7 @@ use notify::{RecursiveMode, Watcher, recommended_watcher};
 use notify_rust::Notification;
 use parking_lot::{Condvar, Mutex};
 use shlex::Shlex;
-use slint::{Image, Model, ModelRc, SharedString, VecModel, set_xdg_app_id};
+use slint::{Image, Model, ModelRc, SharedString, VecModel, Window, set_xdg_app_id};
 use std::{
     error::Error,
     fs,
@@ -28,8 +28,12 @@ use config::{config_color_to_slint, load_or_create_config};
 
 slint::include_modules!();
 
-fn create_slint_items(normalized_entries: &[NormalDesktopEntry]) -> VecModel<AppItem> {
+fn create_slint_items(
+    normalized_entries: &[NormalDesktopEntry],
+    grid_config: config::GridConfig,
+) -> VecModel<AppItem> {
     let model = VecModel::default();
+
     for entry in normalized_entries {
         let icon = Image::load_from_path(entry.icon.as_ref()).unwrap_or_default();
         model.push(AppItem {
@@ -40,11 +44,40 @@ fn create_slint_items(normalized_entries: &[NormalDesktopEntry]) -> VecModel<App
             icon,
         });
     }
+
+    if grid_config.enabled {
+        let cols = grid_config.col as usize;
+        let rows = grid_config.row as usize;
+        let page_size = rows * cols;
+
+        let current = model.row_count();
+        let pages = (current + page_size - 1) / page_size; // ceil division
+        let target = pages * page_size; // fill last page
+
+        let missing = target.saturating_sub(current);
+
+        for _ in 0..missing {
+            model.push(AppItem {
+                app_name: "".into(),
+                app_id: "".into(),
+                exec: "".into(),
+                comment: "".into(),
+                icon: Image::default(),
+            });
+        }
+    }
+
     model
 }
 
 fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
     ThemeSlint {
+        fullscreen: theme.fullscreen as bool,
+        grid_config: slint_generatedAppWindow::GridConfig {
+            enabled: theme.grid_config.enabled,
+            col: theme.grid_config.col as i32,
+            row: theme.grid_config.row as i32,
+        },
         window_background: config_color_to_slint(&theme.window_background),
         selected_item_background: config_color_to_slint(&theme.selected_item_background),
         selected_text_color: config_color_to_slint(&theme.selected_text_color),
@@ -131,17 +164,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     debug!("init window taken: {:?}", start.elapsed());
 
     let theme = theme_from_config(&config.theme);
+    ui.window().set_maximized(config.theme.fullscreen);
+    if !config.theme.fullscreen {
+        ui.window().set_size(slint::WindowSize::Physical(slint::PhysicalSize::new(
+            config.theme.window_width as u32,
+            config.theme.window_height as u32,
+        )));
+    }
     ui.set_theme(theme);
     debug!("set theme taken: {:?}", start.elapsed());
+    let grid_config = config.theme.grid_config.clone();
     let slint_items = {
         let locked_entries = normalized_entries.lock();
-        create_slint_items(&*locked_entries)
+        create_slint_items(&*locked_entries,grid_config.clone())
     };
     ui.set_appItems(ModelRc::new(Rc::new(slint_items)));
     debug!("written app items taken: {:?}", start.elapsed());
     let park = Arc::new(Mutex::new(true));
     let ui_weak_focus = ui.as_weak();
     let park_thread = park.clone();
+
 
     let pair = Arc::new((Mutex::new(false), Condvar::new()));
     let pair_clone = pair.clone();
@@ -202,7 +244,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             sorted_entries_by_usage(&locked_entries, &history)
         };
 
-        let vec_model = create_slint_items(&sorted_entries);
+        let vec_model = create_slint_items(&sorted_entries,grid_config.clone());
 
         if let Some(ui) = ui_weak_clone_text.upgrade() {
             ui.set_appItems(ModelRc::new(Rc::new(vec_model)));
@@ -337,7 +379,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
     drop(config);
-    send_notification(&format!("Cosmic wander initialized took: {:?}", start.elapsed()));
+    send_notification(&format!(
+        "Cosmic wander initialized took: {:?}",
+        start.elapsed()
+    ));
 
     slint::run_event_loop_until_quit().unwrap();
     Ok(())
