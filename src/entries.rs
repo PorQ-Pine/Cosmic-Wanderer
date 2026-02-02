@@ -4,6 +4,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use log::debug;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 
 #[derive(Clone)]
 pub struct NormalDesktopEntry {
@@ -48,8 +49,15 @@ impl DesktopEntryManager {
             .collect();
     }
 
-    pub fn get_normalized_entries(&self, icon_theme: &str, icon_size: &u16) -> Vec<NormalDesktopEntry> {
+    pub fn get_normalized_entries(
+        &self,
+        icon_theme: &str,
+        icon_size: &u16,
+        blacklist: Vec<String>,
+    ) -> Vec<NormalDesktopEntry> {
         let mut entries = Vec::new();
+        let blacklist: HashSet<String> = blacklist.into_iter().collect();
+
         let mut seen_names: std::collections::HashSet<String> = std::collections::HashSet::new();
 
         for entry in &self.desktop_entries {
@@ -57,6 +65,10 @@ impl DesktopEntryManager {
                 Some(name) => name.to_string(),
                 None => continue,
             };
+
+            if blacklist.contains(&entry.appid) {
+                continue;
+            }
 
             let normalized_name = normalize_name(&name);
 

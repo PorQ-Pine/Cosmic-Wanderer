@@ -60,6 +60,7 @@ pub struct ThemeConfig {
 pub struct GeneralConfig {
     pub icon_theme: String,
     pub socket_path: String,
+    pub blacklist: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -161,6 +162,7 @@ fn default_config() -> Config {
         general: GeneralConfig {
             icon_theme: "Papirus-Dark".to_string(),
             socket_path: "/tmp/comsic-wanderer.sock".to_string(),
+            blacklist: Vec::new(),
         },
     }
 }

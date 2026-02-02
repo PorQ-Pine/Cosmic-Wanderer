@@ -142,6 +142,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let normalized_entries = Arc::new(Mutex::new(manager.get_normalized_entries(
         &config.general.icon_theme.clone(),
         &config.theme.icon_size.clone(),
+        config.general.blacklist.clone(),
     )));
     debug!("Load entries taken: {:?}", start.elapsed());
 
@@ -157,6 +158,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let normalized_entries_watcher_cloned = normalized_entries.clone();
     let icon_theme = config.general.icon_theme.clone();
     let icon_size = config.theme.icon_size.clone();
+    let blacklist = config.general.blacklist.clone();
     thread::spawn(move || {
         for res in rx {
             match res {
@@ -167,7 +169,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         debug!("Entry changed");
                         manager.refresh();
                         let mut entries = normalized_entries_watcher_cloned.lock();
-                        *entries = manager.get_normalized_entries(&icon_theme, &icon_size);
+                        *entries = manager.get_normalized_entries(&icon_theme, &icon_size,blacklist.clone());
                     }
                     _ => {}
                 },
