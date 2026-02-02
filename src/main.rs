@@ -5,7 +5,7 @@ use notify::{RecursiveMode, Watcher, recommended_watcher};
 use notify_rust::Notification;
 use parking_lot::{Condvar, Mutex};
 use shlex::Shlex;
-use slint::{Image, Model, ModelRc, SharedString, VecModel, Window, set_xdg_app_id};
+use slint::{Image, Model, ModelRc, SharedString, VecModel, set_xdg_app_id};
 use std::{
     error::Error,
     fs,
@@ -27,11 +27,10 @@ mod config;
 use config::{config_color_to_slint, load_or_create_config};
 
 slint::include_modules!();
-
 fn create_slint_items(
     normalized_entries: &[NormalDesktopEntry],
     grid_config: config::GridConfig,
-) -> VecModel<AppItem> {
+) -> AppItems {
     let model = VecModel::default();
 
     for entry in normalized_entries {
@@ -45,14 +44,16 @@ fn create_slint_items(
         });
     }
 
+    let mut max_pages = 0;
+
     if grid_config.enabled {
         let cols = grid_config.col as usize;
         let rows = grid_config.row as usize;
         let page_size = rows * cols;
 
         let current = model.row_count();
-        let pages = (current + page_size - 1) / page_size; // ceil division
-        let target = pages * page_size; // fill last page
+        let pages = ((current + page_size - 1) / page_size).max(1);
+        let target = pages * page_size;
 
         let missing = target.saturating_sub(current);
 
@@ -65,9 +66,14 @@ fn create_slint_items(
                 icon: Image::default(),
             });
         }
+
+        max_pages = pages as i32;
     }
 
-    model
+    AppItems {
+        app_items: ModelRc::from(Rc::new(model)),
+        max_pages,
+    }
 }
 
 fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
@@ -77,8 +83,21 @@ fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
             enabled: theme.grid_config.enabled,
             col: theme.grid_config.col as i32,
             row: theme.grid_config.row as i32,
+            button_color: config_color_to_slint(&theme.grid_config.button_color),
+            selected_button_color: config_color_to_slint(&theme.grid_config.selected_button_color),
+            button_text_color: config_color_to_slint(&theme.grid_config.button_text_color),
+            selected_button_text_color: config_color_to_slint(
+                &theme.grid_config.selected_button_text_color,
+            ),
+            arrow_button_width: theme.grid_config.arrow_button_width as f32,
+            arrow_button_height: theme.grid_config.arrow_button_height as f32,
+            sort_button_width: theme.grid_config.sort_button_width as f32,
+            sort_button_height: theme.grid_config.sort_button_height as f32,
+            button_border_radius: theme.grid_config.button_border_radius as f32,
         },
         window_background: config_color_to_slint(&theme.window_background),
+        main_window_background: config_color_to_slint(&theme.main_window_background),
+        item_background: config_color_to_slint(&theme.item_background),
         selected_item_background: config_color_to_slint(&theme.selected_item_background),
         selected_text_color: config_color_to_slint(&theme.selected_text_color),
         unselected_text_color: config_color_to_slint(&theme.unselected_text_color),
@@ -115,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = load_or_create_config()?;
     debug!("Load config taken: {:?}", start.elapsed());
     env_logger::init_from_env(
-        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "off"),
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "trace"),
     );
 
     let mut manager = DesktopEntryManager::new();
@@ -166,24 +185,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     let theme = theme_from_config(&config.theme);
     ui.window().set_maximized(config.theme.fullscreen);
     if !config.theme.fullscreen {
-        ui.window().set_size(slint::WindowSize::Physical(slint::PhysicalSize::new(
-            config.theme.window_width as u32,
-            config.theme.window_height as u32,
-        )));
+        ui.window()
+            .set_size(slint::WindowSize::Physical(slint::PhysicalSize::new(
+                config.theme.window_width as u32,
+                config.theme.window_height as u32,
+            )));
     }
     ui.set_theme(theme);
     debug!("set theme taken: {:?}", start.elapsed());
     let grid_config = config.theme.grid_config.clone();
     let slint_items = {
         let locked_entries = normalized_entries.lock();
-        create_slint_items(&*locked_entries,grid_config.clone())
+        create_slint_items(&*locked_entries, grid_config.clone())
     };
-    ui.set_appItems(ModelRc::new(Rc::new(slint_items)));
+    ui.set_appItems(slint_items);
     debug!("written app items taken: {:?}", start.elapsed());
     let park = Arc::new(Mutex::new(true));
     let ui_weak_focus = ui.as_weak();
     let park_thread = park.clone();
-
 
     let pair = Arc::new((Mutex::new(false), Condvar::new()));
     let pair_clone = pair.clone();
@@ -244,10 +263,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             sorted_entries_by_usage(&locked_entries, &history)
         };
 
-        let vec_model = create_slint_items(&sorted_entries,grid_config.clone());
+        let vec_model = create_slint_items(&sorted_entries, grid_config.clone());
 
         if let Some(ui) = ui_weak_clone_text.upgrade() {
-            ui.set_appItems(ModelRc::new(Rc::new(vec_model)));
+            ui.set_appItems(vec_model);
 
             ui.set_selected_index(0);
             ui.invoke_set_scroll(0.0);
@@ -257,12 +276,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let ui_weak_clone_item = ui.as_weak();
     let park_clicked = park.clone();
+    ui.on_sort_clicked(move || {
+        debug!("sort clicked");
+    });
+
     ui.on_item_clicked(move |idx| {
         let idx = idx as usize;
 
         if let Some(ui) = ui_weak_clone_item.upgrade() {
             let entries = ui.get_appItems();
-            if let Some(entry) = entries.row_data(idx) {
+            if let Some(entry) = entries.app_items.row_data(idx) {
+                if entry.exec.is_empty() {
+                    return;
+                }
                 let mut history = load_history();
 
                 increment_usage(&mut history, &entry.app_id);

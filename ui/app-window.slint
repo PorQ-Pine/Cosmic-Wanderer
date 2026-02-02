@@ -8,17 +8,32 @@ export struct AppItem {
     comment: string,
     icon: image,
 }
+export struct AppItems {
+    app-items: [AppItem],
+    max-pages: int,
+}
 
 struct GridConfig {
     enabled: bool,
     col: int,
     row: int,
+    button_color: color,
+    selected_button_color: color,
+    button_text_color: color,
+    selected_button_text_color: color,
+arrow-button-width: length,
+arrow-button-height: length,
+sort-button-width: length,
+sort-button-height: length,
+    button-border-radius: length,
 }
 
 export struct ThemeSlint {
     fullscreen: bool,
     grid_config: GridConfig,
     window-background: color,
+    main_window_background: color,
+    item-background: color,
     selected-item-background: color,
     selected-text-color: color,
     unselected-text-color: color,
@@ -51,7 +66,7 @@ export component AppWindow inherits Window {
     no-frame: true;
     title: "Cosmic Wanderer";
 
-    in-out property <[AppItem]> appItems;
+    in-out property <AppItems> appItems;
     in-out property <bool> focused: true;
     in-out property <bool> scopeFocused: true;
     in-out property <int> selected_index: 0;
@@ -59,6 +74,7 @@ export component AppWindow inherits Window {
     callback focus_changed(bool);
     callback text_entered(string);
     callback item_clicked(int);
+    callback sort_clicked();
 
     public function focusText() {
         input.focus();
@@ -156,7 +172,7 @@ export component AppWindow inherits Window {
                         if (root.selected_index < 0) {
                             root.selected_index = 0;
                         }
-                    } else if (root.selected_index < root.appItems.length - 1) {
+                    } else if (root.selected_index < root.appItems.app-items.length - 1) {
                         root.selected_index += 1;
                         if ((root.selected_index + 1) * root.theme.item-height > (-list.viewport_y + window-height - root.theme.item-height * 2)) {
                             list.viewport_y = -(root.selected_index * root.theme.item-height - (window-height - 150px) + root.theme.item-height);
@@ -167,7 +183,7 @@ export component AppWindow inherits Window {
                 if (event.text == Key.PageDown) {
                     root.selected_index = Math.min(
         root.selected_index + Math.max(1, Math.floor(window_height / root.theme.item_height) - 2),
-        root.appItems.length - 1);
+        root.appItems.app-items.length - 1);
                     list.viewport_y = -root.selected_index * root.theme.item_height + root.theme.item_height;
                     accept
                 }
@@ -203,7 +219,7 @@ export component AppWindow inherits Window {
                 width: parent.width * 0.92;
                 height: window-height - root.theme.input-height * 1.18;
                 x: ((parent.width - self.width) / 2);
-                for data[idx] in root.appItems: VerticalLayout {
+                for data[idx] in root.appItems.app-items: VerticalLayout {
                     height: root.theme.item-height;
                     width: parent.width;
                     spacing: root.theme.item-spacing;
@@ -214,7 +230,7 @@ export component AppWindow inherits Window {
                             clip: false;
                             height: root.theme.item-height - 4px;
                             border-radius: root.theme.item-border-radius;
-                            background: touch_list.has-hover || idx == selected_index ? root.theme.selected-item-background : rgb(0,0,0,0);
+                            background: touch_list.has-hover || idx == selected_index ? root.theme.selected-item-background : root.theme.item-background;
                             animate background { duration: root.theme.animation-time; }
                             x: 0px;
                             width: parent.width;
@@ -269,89 +285,168 @@ export component AppWindow inherits Window {
         in-out property <int> current_page: 0;
         property <int> columns: root.theme.grid_config.col;
         property <int> rows: root.theme.grid_config.row;
-        VerticalLayout {
+        gridVertical := VerticalLayout {
+            width: window_width;
+            alignment: center;
             visible: root.theme.grid_config.enabled;
+            spacing: 10px;
 
-            y: root.theme.input-height * 1.5;
+            y: root.theme.input-height * 1.05;
 
-            GridLayout {
-                spacing: root.theme.item-spacing;
-                height: parent.height * 0.8;
+            HorizontalLayout {
+                width: window_width;
 
-                for data[idx] in root.appItems: touch_grid := TouchArea {
-                    private property <int> local_index: idx - current_page * (columns * rows);
-                    private property <int> grid_index: local_index < 0 ? 0 : local_index;
+                alignment: center;
 
-                    visible: local_index >= 0 && local_index < (columns * rows);
-                    row: grid_index / columns;
-                    col: Math.mod(grid_index, columns);
-                    min-width: (root.theme.window-width * 0.96) / columns;
-                    min-height: ((root.theme.window-height * 0.80) - (root.theme.input-height * 1.09)) / rows;
+                GridLayout {
+                    spacing: root.theme.item-spacing;
+                    height: gridVertical.height * 0.8;
 
-                    VerticalLayout {
+                    for data[idx] in root.appItems.app-items: touch_grid := TouchArea {
+                        private property <int> local_index: idx - current_page * (columns * rows);
+                        private property <int> grid_index: local_index < 0 ? 0 : local_index;
+
+                        visible: local_index >= 0 && local_index < (columns * rows);
+                        row: grid_index / columns;
+                        col: Math.mod(grid_index, columns);
+                        min-width: (root.theme.window-width * 0.96) / columns;
+                        min-height: ((root.theme.window-height * 0.80) - (root.theme.input-height * 1.09)) / rows;
                         Rectangle {
                             border-radius: root.theme.item-border-radius;
-                            background: touch_grid.has-hover ? root.theme.selected-item-background : rgb(0,0,0,0);
+                            background: touch_grid.has-hover && data.exec != "" ? root.theme.selected-item-background : root.theme.item-background;
+                            animate background { duration: root.theme.animation-time; }
+                            width: parent.min-width;
+                            height: parent.height;
+
+                            VerticalLayout {
+                                width: parent.width;
+                                height: parent.height;
+                                alignment: center;
+                                HorizontalLayout {
+                                    width: parent.width;
+                                    alignment: center;
+
+                                    Image {
+                                        width: root.theme.icon-size;
+                                        height: root.theme.icon-size;
+                                        source: data.icon;
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width;
+                                    text: data.app_name;
+                                    horizontal-alignment: center;
+                                    font-weight: root.theme.font-weight;
+                                    font-family: root.theme.font-family;
+                                    font-size: root.theme.comment-font-size;
+                                    color: touch_grid.has-hover ? root.theme.selected-text-color : root.theme.unselected-text-color;
+                                    animate color { duration: root.theme.animation-time; }
+                                    overflow: elide;
+                                }
+                            }
                         }
 
-                        spacing: 6px;
-                        padding: 8px;
-
-                        Image {
-                            source: data.icon;
-                        }
-
-                        Text {
-                            text: data.app_name;
-                            overflow: elide;
-                        }
+                        clicked => root.item_clicked(idx);
                     }
-
-                    clicked => root.item_clicked(idx);
                 }
             }
 
             HorizontalLayout {
-                spacing: 20px;
-                height: window_height * 0.2;
-                alignment: center;
+                alignment: stretch;
+                spacing: 5px;
 
                 Rectangle {
-                    background: #007acc;
-                    Text {
-                        text: "Button 1";
-                        color: white;
-                        horizontal_alignment: center;
-                        vertical_alignment: center;
+                    horizontal-stretch: 0.04;
+                }
+
+                Rectangle {
+                    width: root.theme.grid-config.sort-button-width;
+                }
+                // Centered buttons
+                        Rectangle {
+                    horizontal-stretch: 1.0;
+                }
+
+                // Previous Page
+        gridLeft := TouchArea {
+                    width: root.theme.grid-config.arrow-button-width;
+                    height: root.theme.grid-config.arrow-button-height;
+                    clicked => {
+                        current_page = clamp(current_page - 1, 0, root.appItems.max_pages - 1);
                     }
 
-                    TouchArea {
-                        clicked => {
-                            current_page = current_page - 1;
+                    Rectangle {
+                        border_radius: root.theme.grid-config.button-border-radius;
+                        background: gridLeft.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
+                        animate background { duration: root.theme.animation-time; }
+
+                        Text {
+                            text: "Previous Page";
+                            color: gridLeft.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
+                            animate color { duration: root.theme.animation-time; }
+                            horizontal_alignment: center;
+                            vertical_alignment: center;
+                        }
+                    }
+                }
+
+                // Next Page
+        gridRight := TouchArea {
+                    width: root.theme.grid-config.arrow-button-width;
+                    height: root.theme.grid-config.arrow-button-height;
+                    clicked => {
+                        current_page = clamp(current_page + 1, 0, root.appItems.max_pages - 1);
+                    }
+
+                    Rectangle {
+                        border_radius: root.theme.grid-config.button-border-radius;
+                        background: gridRight.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
+                        animate background { duration: root.theme.animation-time; }
+
+                        Text {
+                            text: "Next Page";
+                            color: gridRight.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
+                            animate color { duration: root.theme.animation-time; }
+                            horizontal_alignment: center;
+                            vertical_alignment: center;
                         }
                     }
                 }
 
                 Rectangle {
-                    width: 100px;
-                    height: 40px;
-                    background: #007acc;
-                    Text {
-                        text: "Button 2";
-                        color: white;
-                        horizontal_alignment: center;
-                        vertical_alignment: center;
+                    horizontal-stretch: 1.0;
+                }
+                // Right-aligned button
+
+        gridSort := TouchArea {
+                    width: root.theme.grid-config.sort-button-width;
+                    height: root.theme.grid-config.sort-button-height;
+                    clicked => {
+                        root.sort_clicked();
                     }
 
-                    TouchArea {
-                        clicked => {
-                            current_page = current_page + 1;
+                    Rectangle {
+                        border_radius: root.theme.grid-config.button-border-radius;
+                        background: gridSort.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
+                        animate background { duration: root.theme.animation-time; }
+
+                        Text {
+                            text: "Sorting Toggle";
+                            color: gridSort.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
+                            animate color { duration: root.theme.animation-time; }
+                            horizontal_alignment: center;
+                            vertical_alignment: center;
                         }
                     }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 0.04;
                 }
             }
         }
     }
 
-    background: rgb(0, 0, 0, 0);
+    background: root.theme.main_window_background;
 }
