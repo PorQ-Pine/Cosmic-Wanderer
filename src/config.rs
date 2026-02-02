@@ -171,7 +171,7 @@ pub fn config_color_to_slint(c: &ConfigColor) -> Color {
 
 fn get_config_file() -> PathBuf {
     let mut path = config_dir().unwrap();
-    path.push("cosmic-wanderer-tests");
+    path.push("cosmic-wanderer");
     fs::create_dir_all(&path).unwrap();
     path.push("config.toml");
     path
