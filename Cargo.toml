@@ -25,7 +25,7 @@ config = "0.15.19"
 slint-build = { git = "https://github.com/slint-ui/slint.git", rev = "9e82c348c79c897d09ebd9fade1afe2b690eb024", features = [] }
 
 [features]
-default = ["quill_defaults"]
+default = ["config_file"]
 config_file = []
 quill_defaults = []
 
