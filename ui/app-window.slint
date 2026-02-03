@@ -47,8 +47,6 @@ export struct ThemeSlint {
     comment-font-size: length,
     font-family: string,
     font-weight: int,
-    window-width: length,
-    window-height: length,
     window-border-width: length,
     input-height: length,
     animation-time: duration}
@@ -61,8 +59,8 @@ export global Palette {
 export component AppWindow inherits Window {
     in property <ThemeSlint> theme;
 
-    property <length> window_width: theme.window-width;
-    property <length> window_height: theme.window-height;
+    property <length> window_width: root.width;
+    property <length> window_height: root.height;
     no-frame: true;
     title: "Cosmic Wanderer";
 
@@ -100,10 +98,10 @@ export component AppWindow inherits Window {
         background: root.theme.window-background;
         border-color: root.theme.selected-item-background;
         border-radius: root.theme.item-border-radius;
-        height: root.theme.window-height - root.theme.input-height;
-        width: root.theme.window-width * 0.96;
+        height: window_height - root.theme.input-height;
+        width: window_width * 0.96;
         y: root.theme.input-height;
-        x: root.theme.window-width * 0.02;
+        x: window_width * 0.02;
     }
 
     Rectangle {
@@ -112,9 +110,9 @@ export component AppWindow inherits Window {
         background: root.theme.window-background;
         border-color: root.theme.selected-item-background;
         border-radius: root.theme.item-border-radius;
-        width: root.theme.window-width * 0.96;
-        x: root.theme.window-width * 0.02;
-        y: root.theme.window-width * 0.02;
+        width: window_width * 0.96;
+        x: window_width * 0.02;
+        y: window_width * 0.02;
         height: root.theme.input-height * 0.80;
     }
 
@@ -307,8 +305,8 @@ export component AppWindow inherits Window {
                         visible: local_index >= 0 && local_index < (columns * rows);
                         row: grid_index / columns;
                         col: Math.mod(grid_index, columns);
-                        min-width: (root.theme.window-width * 0.96) / columns;
-                        min-height: ((root.theme.window-height * 0.80) - (root.theme.input-height * 1.09)) / rows;
+                        min-width: (window_width * 0.96) / columns;
+                        min-height: ((window_height * 0.80) - (root.theme.input-height * 1.09)) / rows;
                         Rectangle {
                             border-radius: root.theme.item-border-radius;
                             background: touch_grid.has-hover && data.exec != "" ? root.theme.selected-item-background : root.theme.item-background;

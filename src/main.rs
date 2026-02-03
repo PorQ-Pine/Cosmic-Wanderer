@@ -111,8 +111,6 @@ fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
         comment_font_size: theme.comment_font_size as f32,
         font_family: theme.font_family.clone().into(),
         font_weight: theme.font_weight,
-        window_width: theme.window_width as f32,
-        window_height: theme.window_height as f32,
         window_border_width: theme.window_border_width as f32,
         input_height: theme.input_height as f32,
         animation_time: theme.animation_duration as i64,
@@ -190,13 +188,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let theme = theme_from_config(&config.theme);
     ui.window().set_maximized(config.theme.maximise);
-    if !config.theme.maximise {
-        ui.window()
-            .set_size(slint::WindowSize::Physical(slint::PhysicalSize::new(
-                config.theme.window_width as u32,
-                config.theme.window_height as u32,
-            )));
-    }
     ui.set_theme(theme);
     debug!("set theme taken: {:?}", start.elapsed());
     let grid_config = config.theme.grid_config.clone();
