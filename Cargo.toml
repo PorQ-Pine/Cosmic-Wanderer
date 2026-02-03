@@ -24,10 +24,14 @@ config = "0.15.19"
 [build-dependencies]
 slint-build = { git = "https://github.com/slint-ui/slint.git", rev = "9e82c348c79c897d09ebd9fade1afe2b690eb024", features = [] }
 
+[features]
+default = ["quill_defaults"]
+config_file = []
+quill_defaults = []
+
 [profile.release]
-lto = "fat"
+lto = "thin"
 opt-level = 3
 strip = true 
-codegen-units = 1
 debug = 0
 debug-assertions = false

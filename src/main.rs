@@ -24,7 +24,7 @@ mod history;
 use crate::history::*;
 
 mod config;
-use config::{config_color_to_slint, load_or_create_config};
+use config::{config_color_to_slint};
 
 slint::include_modules!();
 fn create_slint_items(
@@ -78,7 +78,7 @@ fn create_slint_items(
 
 fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
     ThemeSlint {
-        fullscreen: theme.fullscreen as bool,
+        fullscreen: theme.maximise as bool,
         grid_config: slint_generatedAppWindow::GridConfig {
             enabled: theme.grid_config.enabled,
             col: theme.grid_config.col as i32,
@@ -131,10 +131,14 @@ pub fn send_notification(message: &str) {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let start = Instant::now();
-    let config = load_or_create_config()?;
+    #[cfg(feature = "config_file")]
+    let config = config::load_or_create_config()?;
+    #[cfg(not(feature = "config_file"))]
+    let config = config::default_config();
+
     debug!("Load config taken: {:?}", start.elapsed());
     env_logger::init_from_env(
-        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "trace"),
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"),
     );
 
     let mut manager = DesktopEntryManager::new();
@@ -185,8 +189,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     debug!("init window taken: {:?}", start.elapsed());
 
     let theme = theme_from_config(&config.theme);
-    ui.window().set_maximized(config.theme.fullscreen);
-    if !config.theme.fullscreen {
+    ui.window().set_maximized(config.theme.maximise);
+    if !config.theme.maximise {
         ui.window()
             .set_size(slint::WindowSize::Physical(slint::PhysicalSize::new(
                 config.theme.window_width as u32,
@@ -407,10 +411,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
     drop(config);
+    
+    /*
     send_notification(&format!(
         "Cosmic wander initialized took: {:?}",
         start.elapsed()
     ));
+    */
 
     slint::run_event_loop_until_quit().unwrap();
     Ok(())

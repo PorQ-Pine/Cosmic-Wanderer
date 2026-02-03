@@ -21,10 +21,10 @@ struct GridConfig {
     selected_button_color: color,
     button_text_color: color,
     selected_button_text_color: color,
-arrow-button-width: length,
-arrow-button-height: length,
-sort-button-width: length,
-sort-button-height: length,
+    arrow-button-width: length,
+    arrow-button-height: length,
+    sort-button-width: length,
+    sort-button-height: length,
     button-border-radius: length,
 }
 
@@ -368,7 +368,7 @@ export component AppWindow inherits Window {
                 }
 
                 // Previous Page
-        gridLeft := TouchArea {
+                gridLeft := TouchArea {
                     width: root.theme.grid-config.arrow-button-width;
                     height: root.theme.grid-config.arrow-button-height;
                     clicked => {
@@ -391,7 +391,7 @@ export component AppWindow inherits Window {
                 }
 
                 // Next Page
-        gridRight := TouchArea {
+                gridRight := TouchArea {
                     width: root.theme.grid-config.arrow-button-width;
                     height: root.theme.grid-config.arrow-button-height;
                     clicked => {
@@ -415,33 +415,6 @@ export component AppWindow inherits Window {
 
                 Rectangle {
                     horizontal-stretch: 1.0;
-                }
-                // Right-aligned button
-
-        gridSort := TouchArea {
-                    width: root.theme.grid-config.sort-button-width;
-                    height: root.theme.grid-config.sort-button-height;
-                    clicked => {
-                        root.sort_clicked();
-                    }
-
-                    Rectangle {
-                        border_radius: root.theme.grid-config.button-border-radius;
-                        background: gridSort.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
-                        animate background { duration: root.theme.animation-time; }
-
-                        Text {
-                            text: "Sorting Toggle";
-                            color: gridSort.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
-                            animate color { duration: root.theme.animation-time; }
-                            horizontal_alignment: center;
-                            vertical_alignment: center;
-                        }
-                    }
-                }
-
-                Rectangle {
-                    horizontal-stretch: 0.04;
                 }
             }
         }
