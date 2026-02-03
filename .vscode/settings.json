@@ -3,7 +3,7 @@
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
     },
     "rust-analyzer.linkedProjects": [
-        "${workspaceFolder}/cosmic-wandener-opener/Cargo.toml",
+        "${workspaceFolder}/cosmic-wanderer-opener/Cargo.toml",
         "${workspaceFolder}/Cargo.toml",
     ]
 }

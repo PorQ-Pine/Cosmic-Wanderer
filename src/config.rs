@@ -251,7 +251,7 @@ pub fn default_config() -> Config {
             input_border_width: 3,
             text_font_size: 17,
             comment_font_size: 12,
-            font_family: "JetBrainsMono NF SemiBold".to_string(),
+            font_family: "Adwaita Sans Medium".to_string(),
             font_weight: 650,
             window_border_width: 2,
             input_height: 70,
