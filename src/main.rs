@@ -129,6 +129,9 @@ pub fn send_notification(message: &str) {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let start = Instant::now();
+    unsafe {
+        std::env::set_var("QT_QPA_PLATFORM", "wayland");
+    }
     #[cfg(feature = "config_file")]
     let config = config::load_or_create_config()?;
     #[cfg(not(feature = "config_file"))]
