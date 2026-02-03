@@ -283,6 +283,8 @@ export component AppWindow inherits Window {
         in-out property <int> current_page: 0;
         property <int> columns: root.theme.grid_config.col;
         property <int> rows: root.theme.grid_config.row;
+        property <length> arrow-size-grid: 100px;
+        property <length> page-number-size-grid: 100px;
         gridVertical := VerticalLayout {
             alignment: center;
             visible: root.theme.grid_config.enabled;
@@ -352,17 +354,8 @@ export component AppWindow inherits Window {
                 width: parent.width;
                 alignment: stretch;
                 spacing: 5px;
-
                 Rectangle {
-                    horizontal-stretch: 0.04;
-                }
-
-                Rectangle {
-                    width: root.theme.grid-config.sort-button-width;
-                }
-                // Centered buttons
-                        Rectangle {
-                    horizontal-stretch: 1.0;
+                    horizontal-stretch: 0.1;
                 }
 
                 // Previous Page
@@ -377,17 +370,32 @@ export component AppWindow inherits Window {
                         border_radius: root.theme.grid-config.button-border-radius;
                         background: gridLeft.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
                         animate background { duration: root.theme.animation-time; }
-
-                        Text {
-                            text: "Previous Page";
-                            color: gridLeft.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
-                            animate color { duration: root.theme.animation-time; }
-                            horizontal_alignment: center;
-                            vertical_alignment: center;
+                        Image {
+                            width: arrow-size-grid;
+                            height: arrow-size-grid;
+                            source: @image-url("icons/arrow_back_24dp_000000.svg");
+                            colorize: gridLeft.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
                         }
                     }
                 }
 
+                Rectangle {
+                    horizontal-stretch: 1.0;
+                }
+
+                Text {
+                    text: current_page + "/" + root.appItems.max-pages;
+                    font-weight: root.theme.font-weight;
+                    font-family: root.theme.font-family;
+                    font-size: page-number-size-grid;
+                    color: root.theme.grid-config.button-text-color;
+                    horizontal_alignment: center;
+                    vertical_alignment: center;
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1.0;
+                }
                 // Next Page
                 gridRight := TouchArea {
                     width: root.theme.grid-config.arrow-button-width;
@@ -400,19 +408,17 @@ export component AppWindow inherits Window {
                         border_radius: root.theme.grid-config.button-border-radius;
                         background: gridRight.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
                         animate background { duration: root.theme.animation-time; }
-
-                        Text {
-                            text: "Next Page";
-                            color: gridRight.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
-                            animate color { duration: root.theme.animation-time; }
-                            horizontal_alignment: center;
-                            vertical_alignment: center;
+                        Image {
+                            width: arrow-size-grid;
+                            height: arrow-size-grid;
+                            source: @image-url("icons/arrow_forward_24dp_000000.svg");
+                            colorize: gridRight.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
                         }
                     }
                 }
 
                 Rectangle {
-                    horizontal-stretch: 1.0;
+                    horizontal-stretch: 0.1;
                 }
             }
         }

@@ -24,7 +24,7 @@ mod history;
 use crate::history::*;
 
 mod config;
-use config::{config_color_to_slint};
+use config::config_color_to_slint;
 
 slint::include_modules!();
 fn create_slint_items(
@@ -171,7 +171,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                         debug!("Entry changed");
                         manager.refresh();
                         let mut entries = normalized_entries_watcher_cloned.lock();
-                        *entries = manager.get_normalized_entries(&icon_theme, &icon_size,blacklist.clone());
+                        *entries = manager.get_normalized_entries(
+                            &icon_theme,
+                            &icon_size,
+                            blacklist.clone(),
+                        );
                     }
                     _ => {}
                 },
@@ -229,6 +233,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 slint::invoke_from_event_loop(move || {
                     if let Some(ui) = ui_for_closure.upgrade() {
                         ui.invoke_text_entered(SharedString::from("nothing"));
+                        ui.hide().unwrap();
                     }
                 })
                 .unwrap_or_else(|e| {
@@ -326,29 +331,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
                 drop(entries);
                 let park_inner = park_clicked.clone();
-                if let Some(ui) = ui_weak_clone_item.upgrade() {
-                    ui.hide().unwrap_or_else(|e| {
-                        error!("failed to hide ui: {}", e);
-                    });
-                    let mut p = park_inner.lock();
-                    *p = true;
-                }
+                let mut p = park_inner.lock();
+                *p = true;
             }
         }
     });
 
     let park_focus = park.clone();
-    let ui_weak_focus = ui_weak.clone();
     ui.on_focus_changed(move |focused| {
         let park_inner: Arc<Mutex<bool>> = park_focus.clone();
         if !focused {
-            if let Some(ui) = ui_weak_focus.upgrade() {
-                ui.hide().unwrap_or_else(|e| {
-                    error!("failed to hide ui: {}", e);
-                });
-                let mut p = park_inner.lock();
-                *p = true;
-            }
+            let mut p = park_inner.lock();
+            *p = true;
         }
     });
 
@@ -379,30 +373,52 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ui_weak_clone = ui_weak.clone();
     thread::spawn(move || {
         while let Ok((_stream, _addr)) = listener.accept() {
-            focus_thread.thread().unpark();
+            let ui_for_check = ui_weak_clone.clone();
+            let visible = Arc::new(Mutex::new(false));
+            let visible_clone = visible.clone();
 
-            let ui_for_closure = ui_weak_clone.clone(); // Clone it for the closure
-            let mut p = park_listener.lock();
-            *p = false;
             slint::invoke_from_event_loop(move || {
-                if let Some(ui) = ui_for_closure.upgrade() {
-                    ui.set_text_input(SharedString::from(""));
-                    ui.invoke_text_entered(SharedString::from(""));
-                    ui.invoke_focusText();
-                    ui.set_selected_index(0);
-                    ui.invoke_set_scroll(0.0);
-                    ui.show().unwrap_or_else(|e| {
-                        error!("failed to show ui: {}", e);
-                    });
+                if let Some(ui) = ui_for_check.upgrade() {
+                    let mut v = visible_clone.lock();
+                    *v = ui.window().is_visible();
                 }
             })
-            .unwrap_or_else(|e| {
-                error!("invoke failed show ui: {}", e);
-            });
+            .unwrap();
+            debug!("{}", *visible.lock());
+
+            if *visible.lock() == false {
+                debug!("opening window");
+
+                let mut p = park_listener.lock();
+                *p = false;
+                focus_thread.thread().unpark();
+
+                let ui_for_closure = ui_weak_clone.clone(); // Clone it for the closure
+
+                slint::invoke_from_event_loop(move || {
+                    if let Some(ui) = ui_for_closure.upgrade() {
+                        ui.set_text_input(SharedString::from(""));
+                        ui.invoke_text_entered(SharedString::from(""));
+                        ui.invoke_focusText();
+                        ui.set_selected_index(0);
+                        ui.invoke_set_scroll(0.0);
+                        ui.show().unwrap_or_else(|e| {
+                            error!("failed to show ui: {}", e);
+                        });
+                    }
+                })
+                .unwrap_or_else(|e| {
+                    error!("invoke failed show ui: {}", e);
+                });
+            } else {
+                let mut p = park_listener.lock();
+                *p = true;
+                debug!("closing window");
+            }
         }
     });
     drop(config);
-    
+
     /*
     send_notification(&format!(
         "Cosmic wander initialized took: {:?}",
