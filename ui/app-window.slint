@@ -284,12 +284,13 @@ export component AppWindow inherits Window {
         property <int> columns: root.theme.grid_config.col;
         property <int> rows: root.theme.grid_config.row;
         property <length> arrow-size-grid: 100px;
-        property <length> page-number-size-grid: 100px;
+        property <length> page-number-size-grid: 50px;
         gridVertical := VerticalLayout {
             y: (window-height * 0.02) + (root.theme.input-height * 0.80);
+            height: window_height - ((window-height * 0.02) + (root.theme.input-height * 0.80));
             alignment: center;
             visible: root.theme.grid_config.enabled;
-            spacing: 20px;
+            spacing: 50px;
 
             HorizontalLayout {
                 width: parent.width;
@@ -383,7 +384,7 @@ export component AppWindow inherits Window {
                 }
 
                 Text {
-                    text: current_page + "/" + root.appItems.max-pages;
+                    text: (current_page + 1) + "/" + root.appItems.max-pages;
                     font-weight: root.theme.font-weight;
                     font-family: root.theme.font-family;
                     font-size: page-number-size-grid;

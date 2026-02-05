@@ -139,7 +139,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     debug!("Load config taken: {:?}", start.elapsed());
     env_logger::init_from_env(
-        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"),
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "trace"),
     );
 
     let mut manager = DesktopEntryManager::new();
@@ -376,20 +376,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ui_weak_clone = ui_weak.clone();
     thread::spawn(move || {
         while let Ok((_stream, _addr)) = listener.accept() {
-            let ui_for_check = ui_weak_clone.clone();
-            let visible = Arc::new(Mutex::new(false));
-            let visible_clone = visible.clone();
+            let asleep = *park_listener.lock();
 
-            slint::invoke_from_event_loop(move || {
-                if let Some(ui) = ui_for_check.upgrade() {
-                    let mut v = visible_clone.lock();
-                    *v = ui.window().is_visible();
-                }
-            })
-            .unwrap();
-            debug!("{}", *visible.lock());
+            debug!("window sleeping {}", asleep);
 
-            if *visible.lock() == false {
+            if asleep == true {
                 debug!("opening window");
 
                 let mut p = park_listener.lock();
