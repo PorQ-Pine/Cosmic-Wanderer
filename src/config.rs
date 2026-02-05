@@ -3,10 +3,10 @@ use slint::Color;
 
 #[cfg(feature = "config_file")]
 use {
-    std::fs,
-    std::path::{Path, PathBuf},
     config::{Config as ConfigLoader, File},
     dirs::config_dir,
+    std::fs,
+    std::path::{Path, PathBuf},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -263,7 +263,10 @@ pub fn default_config() -> Config {
         general: GeneralConfig {
             icon_theme: "Papirus-Dark".to_string(),
             socket_path: "/tmp/comsic-wanderer.sock".to_string(),
-            blacklist: Vec::new(),
+            blacklist: vec!["syncthing-start", "syncthing-ui", "vncviewer"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
         },
     }
 }
