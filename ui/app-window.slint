@@ -296,9 +296,8 @@ export component AppWindow inherits Window {
         gridVertical := VerticalLayout {
             y: (window-height * 0.02) + (root.theme.input-height * 1.00);
             height: window_height - ((window-height * 0.06) + (root.theme.input-height * 1.00));
-            alignment: center;
+            alignment: stretch;
             visible: root.theme.grid_config.enabled;
-            spacing: 50px;
 
             HorizontalLayout {
                 width: parent.width;
@@ -370,6 +369,9 @@ export component AppWindow inherits Window {
                     }
                 }
             }
+                                            Rectangle {
+                                    vertical-stretch: 1;
+                                }
 
             HorizontalLayout {
                 width: parent.width;
@@ -442,6 +444,9 @@ export component AppWindow inherits Window {
                     horizontal-stretch: 0.1;
                 }
             }
+                                            Rectangle {
+                                    vertical-stretch: 0.3;
+                                }
         }
     }
 
