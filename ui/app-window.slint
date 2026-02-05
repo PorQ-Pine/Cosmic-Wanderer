@@ -317,12 +317,12 @@ export component AppWindow inherits Window {
                         col: Math.mod(grid_index, columns);
                         min-width: (window_width * 0.96) / columns;
                         min-height: ((window_height * 0.80) - (root.theme.input-height * 1.09)) / rows;
-                        Rectangle {
+                        grid_rectangle:= Rectangle {
                             border-radius: root.theme.item-border-radius;
                             background: touch_grid.has-hover && data.exec != "" ? root.theme.selected-item-background : root.theme.item-background;
                             animate background { duration: root.theme.animation-time; }
                             width: parent.min-width;
-                            height: parent.height;
+                            height: parent.min-height;
 
                             VerticalLayout {
                                 width: parent.width;
@@ -333,12 +333,11 @@ export component AppWindow inherits Window {
                                 }
 
                                 HorizontalLayout {
-                                    width: parent.width;
                                     alignment: center;
 
-                                    Image {
-                                        width: root.theme.icon-size;
-                                        height: root.theme.icon-size;
+                                    grid_icon:= Image {
+                                    width: min(root.theme.icon-size, grid_rectangle.height - root.theme.comment-font-size*1.1);
+                                        height: min(root.theme.icon-size, grid_rectangle.height - root.theme.comment-font-size*1.1);
                                         source: data.icon;
                                     }
                                 }
@@ -354,7 +353,7 @@ export component AppWindow inherits Window {
                                     horizontal-alignment: center;
                                     font-weight: root.theme.font-weight;
                                     font-family: root.theme.font-family;
-                                    font-size: root.theme.comment-font-size;
+                                    font-size: max(5px, min(root.theme.comment-font-size, grid_rectangle.height - grid_icon.height));
                                     color: touch_grid.has-hover ? root.theme.selected-text-color : root.theme.unselected-text-color;
                                     animate color { duration: root.theme.animation-time; }
                                     overflow: elide;
