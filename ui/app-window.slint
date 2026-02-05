@@ -112,7 +112,7 @@ export component AppWindow inherits Window {
         border-radius: root.theme.item-border-radius;
         width: window_width * 0.96;
         x: window_width * 0.02;
-        y: window_width * 0.02;
+        y: window_height * 0.02;
         height: root.theme.input-height * 0.80;
     }
 
@@ -139,7 +139,7 @@ export component AppWindow inherits Window {
             horizontal-alignment: left;
             width: parent.width * 0.96 - 16px;
             x: window-width * 0.02 + 16px;
-            y: window-width * 0.02;
+            y: window-height * 0.02;
             height: root.theme.input-height * 0.80;
 
             font-size: root.theme.input-font-size;
@@ -286,10 +286,9 @@ export component AppWindow inherits Window {
         property <length> arrow-size-grid: 100px;
         property <length> page-number-size-grid: 100px;
         gridVertical := VerticalLayout {
+            y: (window-height * 0.02) + (root.theme.input-height * 0.80);
             alignment: center;
             visible: root.theme.grid_config.enabled;
-            y: root.theme.input-height * 1.05;
-            height: window_height - (root.theme.input-height * 1.05);
             spacing: 20px;
 
             HorizontalLayout {
