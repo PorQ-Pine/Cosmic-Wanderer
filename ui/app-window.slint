@@ -30,6 +30,7 @@ struct GridConfig {
 
 export struct ThemeSlint {
     fullscreen: bool,
+    search_icon_enable: bool,
     grid_config: GridConfig,
     window-background: color,
     main_window_background: color,
@@ -68,6 +69,7 @@ export component AppWindow inherits Window {
     in-out property <bool> focused: true;
     in-out property <bool> scopeFocused: true;
     in-out property <int> selected_index: 0;
+    in-out property <int> current_page: 0;
     in-out property <string> text_input;
     callback focus_changed(bool);
     callback text_entered(string);
@@ -104,7 +106,7 @@ export component AppWindow inherits Window {
         x: window_width * 0.02;
     }
 
-    Rectangle {
+    input_rectangle := Rectangle {
         border-width: root.theme.input-border-width;
         clip: false;
         background: root.theme.window-background;
@@ -113,6 +115,13 @@ export component AppWindow inherits Window {
         width: window_width * 0.96;
         x: window_width * 0.02;
         y: window_height * 0.02;
+        if root.theme.search-icon-enable: Image {
+            x: (parent.width * 0.99) - (parent.height * 0.8);
+            height: parent.height * 0.8;
+            source: @image-url("icons/search_24dp_000000.svg");
+            colorize: root.theme.selected-item-background;
+        }
+
         height: root.theme.input-height * 0.80;
     }
 
@@ -137,7 +146,7 @@ export component AppWindow inherits Window {
             text-color: root.theme.unselected-text-color;
             margin: 10px;
             horizontal-alignment: left;
-            width: parent.width * 0.96 - 16px;
+            width: root.theme.search-icon-enable ? ((parent.width * 0.96 - 16px) - (input_rectangle.height * 0.8)) - input_rectangle.width * 0.01 : parent.width * 0.96 - 16px;
             x: window-width * 0.02 + 16px;
             y: window-height * 0.02;
             height: root.theme.input-height * 0.80;
@@ -280,7 +289,6 @@ export component AppWindow inherits Window {
             }
         }
 
-        in-out property <int> current_page: 0;
         property <int> columns: root.theme.grid_config.col;
         property <int> rows: root.theme.grid_config.row;
         property <length> arrow-size-grid: 100px;
@@ -319,7 +327,11 @@ export component AppWindow inherits Window {
                             VerticalLayout {
                                 width: parent.width;
                                 height: parent.height;
-                                alignment: center;
+                                alignment: stretch;
+                                Rectangle {
+                                    vertical-stretch: 1;
+                                }
+
                                 HorizontalLayout {
                                     width: parent.width;
                                     alignment: center;
@@ -331,8 +343,13 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
+                                Rectangle {
+                                    vertical-stretch: 0.2;
+                                }
+
                                 Text {
-                                    width: parent.width;
+                                    x: parent.width * 0.1;
+                                    width: parent.width * 0.8;
                                     text: data.app_name;
                                     horizontal-alignment: center;
                                     font-weight: root.theme.font-weight;
@@ -341,6 +358,11 @@ export component AppWindow inherits Window {
                                     color: touch_grid.has-hover ? root.theme.selected-text-color : root.theme.unselected-text-color;
                                     animate color { duration: root.theme.animation-time; }
                                     overflow: elide;
+                                    wrap: word-wrap;
+                                }
+
+                                Rectangle {
+                                    vertical-stretch: 1;
                                 }
                             }
                         }

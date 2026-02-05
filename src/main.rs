@@ -79,6 +79,7 @@ fn create_slint_items(
 fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
     ThemeSlint {
         fullscreen: theme.maximise as bool,
+        search_icon_enable: theme.search_icon_enable as bool,
         grid_config: slint_generatedAppWindow::GridConfig {
             enabled: theme.grid_config.enabled,
             col: theme.grid_config.col as i32,
@@ -195,7 +196,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let theme = theme_from_config(&config.theme);
     ui.window().set_maximized(config.theme.maximise);
-    ui.set_theme(theme);
+    ui.set_theme(theme.clone());
     debug!("set theme taken: {:?}", start.elapsed());
     let grid_config = config.theme.grid_config.clone();
     let slint_items = {
@@ -395,6 +396,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         ui.invoke_text_entered(SharedString::from(""));
                         ui.invoke_focusText();
                         ui.set_selected_index(0);
+                        ui.set_current_page(0);
                         ui.invoke_set_scroll(0.0);
                         ui.show().unwrap_or_else(|e| {
                             error!("failed to show ui: {}", e);
@@ -412,6 +414,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
     drop(config);
+    drop(theme);
 
     /*
     send_notification(&format!(
