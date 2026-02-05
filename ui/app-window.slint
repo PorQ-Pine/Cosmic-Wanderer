@@ -295,7 +295,7 @@ export component AppWindow inherits Window {
         property <length> page-number-size-grid: 50px;
         gridVertical := VerticalLayout {
             y: (window-height * 0.02) + (root.theme.input-height * 1.00);
-            height: window_height - ((window-height * 0.02) + (root.theme.input-height * 0.80));
+            height: window_height - ((window-height * 0.06) + (root.theme.input-height * 1.00));
             alignment: center;
             visible: root.theme.grid_config.enabled;
             spacing: 50px;

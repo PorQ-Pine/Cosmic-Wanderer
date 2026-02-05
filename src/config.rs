@@ -3,10 +3,10 @@ use slint::Color;
 
 #[cfg(feature = "config_file")]
 use {
-    std::fs,
-    std::path::{Path, PathBuf},
     config::{Config as ConfigLoader, File},
     dirs::config_dir,
+    std::fs,
+    std::path::{Path, PathBuf},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -151,7 +151,7 @@ pub fn default_config() -> Config {
             item_height: 65,
             item_spacing: 5,
             item_border_radius: 10,
-            icon_size: 48,
+            icon_size: 16, // Don't change, this is native size
             input_font_size: 20,
             input_border_width: 3,
             text_font_size: 17,
@@ -249,21 +249,24 @@ pub fn default_config() -> Config {
             item_height: 65,
             item_spacing: 5,
             item_border_radius: 10,
-            icon_size: 48,
+            icon_size: 64,
             input_font_size: 20,
             input_border_width: 3,
             text_font_size: 17,
-            comment_font_size: 12,
+            comment_font_size: 18,
             font_family: "Adwaita Sans Medium".to_string(),
             font_weight: 650,
-            window_border_width: 2,
+            window_border_width: 0,
             input_height: 70,
             animation_duration: 0,
         },
         general: GeneralConfig {
             icon_theme: "Papirus-Dark".to_string(),
             socket_path: "/tmp/comsic-wanderer.sock".to_string(),
-            blacklist: Vec::new(),
+            blacklist: vec!["syncthing-start", "syncthing-ui", "vncviewer"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
         },
     }
 }
