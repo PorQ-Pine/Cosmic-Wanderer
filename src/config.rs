@@ -36,6 +36,7 @@ pub struct GridConfig {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ThemeConfig {
     pub maximise: bool,
+    pub search_icon_enable: bool,
     pub grid_config: GridConfig,
     pub window_background: ConfigColor,
     pub main_window_background: ConfigColor,
@@ -76,6 +77,7 @@ pub fn default_config() -> Config {
     Config {
         theme: ThemeConfig {
             maximise: false,
+            search_icon_enable: false,
             grid_config: GridConfig {
                 enabled: false,
                 col: 8,
@@ -173,6 +175,7 @@ pub fn default_config() -> Config {
     Config {
         theme: ThemeConfig {
             maximise: true,
+            search_icon_enable: true,
             grid_config: GridConfig {
                 enabled: true,
                 col: 5,
