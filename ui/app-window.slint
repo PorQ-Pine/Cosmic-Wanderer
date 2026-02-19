@@ -391,13 +391,13 @@ export component AppWindow inherits Window {
 
                     Rectangle {
                         border_radius: root.theme.grid-config.button-border-radius;
-                        background: gridLeft.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
+                        background: gridLeft.pressed ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
                         animate background { duration: root.theme.animation-time; }
                         Image {
                             width: arrow-size-grid;
                             height: arrow-size-grid;
                             source: @image-url("icons/arrow_back_24dp_000000.svg");
-                            colorize: gridLeft.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
+                            colorize: gridLeft.pressed ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
                         }
                     }
                 }
@@ -429,13 +429,13 @@ export component AppWindow inherits Window {
 
                     Rectangle {
                         border_radius: root.theme.grid-config.button-border-radius;
-                        background: gridRight.has-hover ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
+                        background: gridRight.pressed ? root.theme.grid-config.selected-button-color : root.theme.grid-config.button-color;
                         animate background { duration: root.theme.animation-time; }
                         Image {
                             width: arrow-size-grid;
                             height: arrow-size-grid;
                             source: @image-url("icons/arrow_forward_24dp_000000.svg");
-                            colorize: gridRight.has-hover ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
+                            colorize: gridRight.pressed ? root.theme.grid-config.selected-button-text-color : root.theme.grid-config.button-text-color;
                         }
                     }
                 }
