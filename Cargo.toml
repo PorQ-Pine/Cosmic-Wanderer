@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-slint = { git = "https://github.com/slint-ui/slint.git", rev = "9e82c348c79c897d09ebd9fade1afe2b690eb024", default-features = false, features = [
+slint = { version = "1.15.1", default-features = false, features = [
     "accessibility",
     "compat-1-2",
     "renderer-software",
@@ -28,7 +28,7 @@ parking_lot = "0.12"
 config = "0.15.19"
 
 [build-dependencies]
-slint-build = { git = "https://github.com/slint-ui/slint.git", rev = "9e82c348c79c897d09ebd9fade1afe2b690eb024", features = [
+slint-build = { version = "1.15.1", features = [
 ] }
 
 [features]
