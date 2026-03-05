@@ -6,6 +6,7 @@ use notify_rust::Notification;
 use parking_lot::{Condvar, Mutex};
 use shlex::Shlex;
 use slint::{Image, Model, ModelRc, SharedString, VecModel, set_xdg_app_id};
+use std::time::Duration;
 use std::{
     error::Error,
     fs,
@@ -22,9 +23,12 @@ use entries::NormalDesktopEntry;
 
 mod history;
 use crate::history::*;
+use crate::niri::NiriWatcher;
 
 mod config;
 use config::config_color_to_slint;
+
+mod niri;
 
 slint::include_modules!();
 fn create_slint_items(
@@ -145,6 +149,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut manager = DesktopEntryManager::new();
 
+    let (mut niri, focus_changed) = NiriWatcher::new();
+    thread::spawn(move || {
+        niri.start();
+    });
+
     let normalized_entries = Arc::new(Mutex::new(manager.get_normalized_entries(
         &config.general.icon_theme.clone(),
         &config.theme.icon_size.clone(),
@@ -214,23 +223,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let focus_thread = thread::spawn(move || {
         loop {
-            let ui_for_closure = ui_weak_focus.clone();
-            let park_inner = park_thread.clone();
-
-            slint::invoke_from_event_loop(move || {
-                if let Some(ui) = ui_for_closure.upgrade() {
-                    if !ui.get_scopeFocused() {
-                        if !ui.invoke_readFocus() {
-                            let mut p = park_inner.lock();
-                            *p = true;
-                        }
-                    }
-                }
-            })
-            .unwrap_or_else(|e| {
-                error!("Invoke failed focus: {}", e);
-            });
-
             if *park_thread.lock() {
                 let (lock, cvar) = &*pair_clone;
                 let ui_for_closure = ui_weak_focus.clone();
@@ -243,6 +235,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .unwrap_or_else(|e| {
                     error!("Invoke failed enter text: {}", e);
                 });
+                thread::sleep(Duration::from_millis(500));
                 *lock.lock() = false;
                 cvar.notify_one();
                 debug!("Parking thread.");
@@ -341,17 +334,31 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
+    /*
     let park_focus = park.clone();
     ui.on_focus_changed(move |focused| {
         let park_inner: Arc<Mutex<bool>> = park_focus.clone();
+        debug!("focus: {}", focused);
         if !focused {
+            debug!("closing because focus");
             let mut p = park_inner.lock();
             *p = true;
         }
     });
+    */
+    let park_focus = park.clone();
+    thread::spawn(move || {
+        loop {
+            if let Ok(()) = focus_changed.recv() {
+                debug!("closing because focus change");
+                let park_inner: Arc<Mutex<bool>> = park_focus.clone();
+                let mut p = park_inner.lock();
+                *p = true;
+            }
+        }
+    });
 
     let pair_for_timer = pair.clone();
-
     let timer = slint::Timer::default();
     timer.start(
         slint::TimerMode::Repeated,

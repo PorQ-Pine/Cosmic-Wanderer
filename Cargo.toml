@@ -26,10 +26,10 @@ notify-rust = "4"
 notify = "8.2.0"
 parking_lot = "0.12"
 config = "0.15.19"
+niri-ipc = { path = "../niri/niri-ipc/" }
 
 [build-dependencies]
-slint-build = { version = "1.15.1", features = [
-] }
+slint-build = { version = "1.15.1", features = [] }
 
 [features]
 default = ["config_file"]
