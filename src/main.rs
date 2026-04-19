@@ -95,7 +95,6 @@ fn theme_from_config(theme: &config::ThemeConfig) -> ThemeSlint {
                 &theme.grid_config.selected_button_text_color,
             ),
             arrow_button_width: theme.grid_config.arrow_button_width as f32,
-            arrow_button_height: theme.grid_config.arrow_button_height as f32,
             sort_button_width: theme.grid_config.sort_button_width as f32,
             sort_button_height: theme.grid_config.sort_button_height as f32,
             button_border_radius: theme.grid_config.button_border_radius as f32,

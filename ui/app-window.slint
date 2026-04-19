@@ -22,7 +22,6 @@ struct GridConfig {
     button_text_color: color,
     selected_button_text_color: color,
     arrow-button-width: length,
-    arrow-button-height: length,
     sort-button-width: length,
     sort-button-height: length,
     button-border-radius: length,
@@ -50,7 +49,8 @@ export struct ThemeSlint {
     font-weight: int,
     window-border-width: length,
     input-height: length,
-    animation-time: duration}
+    animation-time: duration
+}
 
 export global Palette {
     in property <color> foreground-color;
@@ -117,7 +117,7 @@ export component AppWindow inherits Window {
         y: window_height * 0.02;
         if root.theme.search-icon-enable: Image {
             x: (parent.width * 0.99) - (parent.height * 0.8);
-            height: parent.height * 0.8;
+            height: parent.height * 0.7;
             source: @image-url("icons/search_24dp_000000.svg");
             colorize: root.theme.selected-item-background;
         }
@@ -291,8 +291,8 @@ export component AppWindow inherits Window {
 
         property <int> columns: root.theme.grid_config.col;
         property <int> rows: root.theme.grid_config.row;
-        property <length> arrow-size-grid: 100px;
-        property <length> page-number-size-grid: 50px;
+        property <length> arrow-size-grid: root.theme.grid-config.arrow-button-width * 0.8;
+        property <length> page-number-size-grid: 20px;
         gridVertical := VerticalLayout {
             y: (window-height * 0.02) + (root.theme.input-height * 1.00);
             height: window_height - ((window-height * 0.06) + (root.theme.input-height * 1.00));
@@ -302,6 +302,8 @@ export component AppWindow inherits Window {
             HorizontalLayout {
                 width: parent.width;
                 alignment: center;
+                padding-left: window_width * 0.02;
+                padding-right: self.padding-left;
 
                 GridLayout {
                     spacing: root.theme.item-spacing;
@@ -314,9 +316,9 @@ export component AppWindow inherits Window {
                         visible: local_index >= 0 && local_index < (columns * rows);
                         row: grid_index / columns;
                         col: Math.mod(grid_index, columns);
-                        min-width: (window_width * 0.96) / columns;
-                        min-height: ((window_height * 0.80) - (root.theme.input-height * 1.09)) / rows;
-                        grid_rectangle:= Rectangle {
+                        min-width: (window_width * 0.92) / columns;
+                        min-height: ((window_height * 0.80) - (root.theme.input-height * 1.09)) / rows + 10px;
+                        grid_rectangle := Rectangle {
                             border-radius: root.theme.item-border-radius;
                             background: touch_grid.has-hover && data.exec != "" ? root.theme.selected-item-background : root.theme.item-background;
                             animate background { duration: root.theme.animation-time; }
@@ -334,9 +336,9 @@ export component AppWindow inherits Window {
                                 HorizontalLayout {
                                     alignment: center;
 
-                                    grid_icon:= Image {
-                                    width: min(root.theme.icon-size, grid_rectangle.height - root.theme.comment-font-size*1.1);
-                                        height: min(root.theme.icon-size, grid_rectangle.height - root.theme.comment-font-size*1.1);
+                                    grid_icon := Image {
+                                        width: min(root.theme.icon-size, grid_rectangle.height - root.theme.comment-font-size * 1.1);
+                                        height: min(root.theme.icon-size, grid_rectangle.height - root.theme.comment-font-size * 1.1);
                                         source: data.icon;
                                     }
                                 }
@@ -369,22 +371,23 @@ export component AppWindow inherits Window {
                     }
                 }
             }
-                                            Rectangle {
-                                    vertical-stretch: 1;
-                                }
+
+            Rectangle {
+                vertical-stretch: 1;
+            }
 
             HorizontalLayout {
                 width: parent.width;
                 alignment: stretch;
                 spacing: 5px;
                 Rectangle {
-                    horizontal-stretch: 0.1;
+                    horizontal-stretch: 1.0;
                 }
 
                 // Previous Page
                 gridLeft := TouchArea {
                     width: root.theme.grid-config.arrow-button-width;
-                    height: root.theme.grid-config.arrow-button-height;
+                    height: self.width;
                     clicked => {
                         current_page = clamp(current_page - 1, 0, root.appItems.max_pages - 1);
                     }
@@ -403,11 +406,32 @@ export component AppWindow inherits Window {
                 }
 
                 Rectangle {
-                    horizontal-stretch: 1.0;
+                    horizontal-stretch: 0.05;
                 }
 
                 Text {
-                    text: (current_page + 1) + "/" + root.appItems.max-pages;
+                    text: (current_page + 1);
+                    font-weight: root.theme.font-weight;
+                    font-family: root.theme.font-family;
+                    font-size: page-number-size-grid;
+                    color: root.theme.grid-config.button-text-color;
+                    horizontal_alignment: center;
+                    vertical_alignment: center;
+                }
+
+                Text {
+                    text: "of";
+                    font-weight: root.theme.font-weight;
+                    font-family: root.theme.font-family;
+                    font-italic: true;
+                    font-size: page-number-size-grid;
+                    color: root.theme.grid-config.button-text-color;
+                    horizontal_alignment: center;
+                    vertical_alignment: center;
+                }
+
+                Text {
+                    text: root.appItems.max-pages;
                     font-weight: root.theme.font-weight;
                     font-family: root.theme.font-family;
                     font-size: page-number-size-grid;
@@ -417,12 +441,12 @@ export component AppWindow inherits Window {
                 }
 
                 Rectangle {
-                    horizontal-stretch: 1.0;
+                    horizontal-stretch: 0.05;
                 }
                 // Next Page
                 gridRight := TouchArea {
                     width: root.theme.grid-config.arrow-button-width;
-                    height: root.theme.grid-config.arrow-button-height;
+                    height: self.width;
                     clicked => {
                         current_page = clamp(current_page + 1, 0, root.appItems.max_pages - 1);
                     }
@@ -441,12 +465,9 @@ export component AppWindow inherits Window {
                 }
 
                 Rectangle {
-                    horizontal-stretch: 0.1;
+                    horizontal-stretch: 1.0;
                 }
             }
-                                            Rectangle {
-                                    vertical-stretch: 0.3;
-                                }
         }
     }
 
